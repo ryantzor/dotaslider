@@ -146,16 +146,18 @@
     overflow: hidden;
     position: relative;
     width: 100%;
+    padding: 20px 0; /* Add some padding around the images */
   }
 
   .carouselOfImages {
     display: flex;
+    justify-content: center; /* Center the images horizontally */
     width: max-content; /* Allow it to stretch beyond the visible area */
-    transition: transform 0.5s ease;
+    transition: transform 2s ease;
   }
 
   .carouselImage {
-    flex: 0 0 calc(100% / 3); /* Ensure each cell gets its proper width */
+    flex: 0 0 calc(100% / 10); /* Ensure each cell gets its proper width */
     height: 200px;
     background-size: cover;
     background-position: center;
