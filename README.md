@@ -1,18 +1,12 @@
-# sv
+# DotaSlider
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+## What is this?
 
-## Creating a project
+A Sveltekit Dota 2 Project
 
-If you're seeing this, you've probably already done this step. Congrats!
+I really wanted the old functionality in Dota 2, where you could use your mousewheel to scroll through the heroes; or click and drag them.
 
-```bash
-# create a new project in the current directory
-npx sv create
-
-# create a new project in my-app
-npx sv create my-app
-```
+Here is a start, I'm hosting it in Vercel. If you'e like to contribute send me a message on github and I'll add you as a contributor
 
 ## Developing
 

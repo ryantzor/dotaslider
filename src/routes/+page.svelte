@@ -1,33 +1,7 @@
-<div
-  class="carouselContainer"
-  on:mousedown={handleDragStart}
-  on:mousemove={handleDragMove}
-  on:mouseup={handleDragEnd}
-  on:mouseleave={handleDragEnd}
-  on:touchstart={handleDragStart}
-  on:touchmove={handleDragMove}
-  on:touchend={handleDragEnd}
->
-  <div class="carouselOfImages">
-    {#each items as { name, imageUrl }}
-      <div
-        class="carouselImage"
-        style="background-image: url({imageUrl});"
-        title={name}
-      >
-        <div class="imageOverlay">{name}</div>
-      </div>
-    {/each}
-  </div>
-</div>
-
-
-
 <script>
   import { onMount } from "svelte";
   import data from "/src/dota2_heroes.json"; // Import the JSON file
 
-  let carousel;
   let selectedIndex = 0;
   let items = []; // Store the JSON data here
   let isDragging = false;
@@ -71,14 +45,18 @@
 
   const moveCarousel = (direction) => {
     const totalCells = items.length;
+    const cellWidth = carousel.offsetWidth / settings.visibleCells; // Cell width
+
     if (settings.wrapAround) {
       selectedIndex = (selectedIndex + direction + totalCells) % totalCells;
     } else {
-      selectedIndex = Math.max(
-        0,
-        Math.min(selectedIndex + direction, totalCells - 1)
-      );
+      selectedIndex = Math.max(0, Math.min(selectedIndex + direction, totalCells - 1));
     }
+
+    // Adjust transform for proper alignment across the full list
+    const offset = -selectedIndex * cellWidth;
+    carousel.style.transform = `translateX(${offset}px)`;
+
     resizeCells();
   };
 
@@ -107,17 +85,56 @@
     }
   };
 
+  const handleWheel = (event) => {
+    event.preventDefault(); // Prevent the page from scrolling
+
+    const direction = event.deltaY < 0 ? -1 : 1; // Scroll up (-1) or down (1)
+    moveCarousel(direction);
+  };
+
   onMount(() => {
     items = data; // Load the JSON data
     carousel = document.querySelector(".carouselOfImages");
     resizeCells();
 
+    // Add the wheel event listener for mouse scroll
+    carousel.addEventListener("wheel", handleWheel, { passive: false });
+
     if (settings.autoPlay) {
       setInterval(() => moveCarousel(1), 3000);
     }
   });
+
+  // Cleanup when the component is destroyed
+  // onDestroy(() => {
+  //   if (carousel) {
+  //     carousel.removeEventListener("wheel", handleWheel);
+  //   }
+  // });
 </script>
 
+<div  
+  class="carouselContainer"
+  on:mousedown={handleDragStart}
+  on:mousemove={handleDragMove}
+  on:mouseup={handleDragEnd}
+  on:mouseleave={handleDragEnd}
+  on:touchstart={handleDragStart}
+  on:touchmove={handleDragMove}
+  on:touchend={handleDragEnd}
+>
+  <div class="carouselOfImages">
+    {#each items as { name, imageUrl }}
+      <div
+        class="carouselImage"
+        style="background-image: url({imageUrl});"
+        title={name}
+      >
+        <div class="imageOverlay">{name}</div>
+      </div>
+    {/each}
+  </div>
+</div>
 
 <style>
   .carouselContainer {
@@ -128,11 +145,12 @@
 
   .carouselOfImages {
     display: flex;
+    width: max-content; /* Allow it to stretch beyond the visible area */
     transition: transform 0.5s ease;
   }
 
   .carouselImage {
-    flex: 0 0 20%;
+    flex: 0 0 calc(100% / 3); /* Ensure each cell gets its proper width */
     height: 200px;
     background-size: cover;
     background-position: center;
