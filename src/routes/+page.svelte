@@ -1,7 +1,8 @@
 <script>
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import data from "/src/dota2_heroes.json"; // Import the JSON file
 
+  let carousel;
   let selectedIndex = 0;
   let items = []; // Store the JSON data here
   let isDragging = false;
@@ -106,15 +107,18 @@
   });
 
   // Cleanup when the component is destroyed
-  // onDestroy(() => {
-  //   if (carousel) {
-  //     carousel.removeEventListener("wheel", handleWheel);
-  //   }
-  // });
+  onDestroy(() => {
+    if (carousel) {
+      carousel.removeEventListener("wheel", handleWheel);
+    }
+  });
 </script>
 
-<div  
+<div
   class="carouselContainer"
+  role="region"
+  aria-label="Image carousel showcasing Dota2 heroes"
+  aria-live="polite"
   on:mousedown={handleDragStart}
   on:mousemove={handleDragMove}
   on:mouseup={handleDragEnd}
@@ -129,6 +133,7 @@
         class="carouselImage"
         style="background-image: url({imageUrl});"
         title={name}
+        aria-label={name}
       >
         <div class="imageOverlay">{name}</div>
       </div>
