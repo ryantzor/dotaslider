@@ -142,6 +142,7 @@
 </div>
 
 <style>
+
   .carouselContainer {
     overflow: hidden;
     position: relative;
@@ -166,6 +167,11 @@
     text-align: center;
     position: relative;
     color: white;
+  }
+
+  .carouselImage.is-selected {
+    transform: scale(5); /* Make the selected image larger */
+    z-index: 1; /* Bring it to the front */
   }
 
   .carouselImage .imageOverlay {
