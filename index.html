@@ -611,7 +611,7 @@
   <p class="hint">Drag / swipe / scroll wheel • lands with momentum</p>
 
   <!-- MLG Hitmarker sound -->
-  <audio id="hitmarker" preload="auto" src="https://instrumentalfx.co/wp-content/uploads/2017/12/Hitmarker_-_MLG_Sound_Effect.mp3"></audio>
+  <audio id="hitmarker" preload="auto" src="memes/hitmarker.mp3"></audio>
 
   <!-- MLG landing meme popup -->
   <div id="mlgMeme" aria-hidden="true">
@@ -929,15 +929,34 @@
       animId = requestAnimationFrame(animate);
     }
 
+    // ---- MLG crosshair tick sounds ----
+    // A rotating pool of short meme blips, one per scroll/drag tick
+    const TICK_SOUNDS = [
+      'memes/tick-hitmarker.mp3',
+      'memes/tick-pew.mp3',
+      'memes/tick-ding.mp3',
+      'memes/tick-headshot.mp3'
+    ];
+    const tickAudios = TICK_SOUNDS.map(src => {
+      const a = new Audio(src);
+      a.preload = 'auto';
+      a.volume = 0.45;
+      return a;
+    });
+    let tickIndex = Math.floor(Math.random() * tickAudios.length);
+
     function playHitmarker() {
       if (currentTheme !== 'mlg') return;
       const now = performance.now();
-      if (now - lastHitTime < 40) return;
+      if (now - lastHitTime < 35) return;
       lastHitTime = now;
+      // Step through the pool with a little randomness so consecutive ticks
+      // don't sound identical
+      tickIndex = (tickIndex + 1 + Math.floor(Math.random() * 2)) % tickAudios.length;
       try {
-        // Clone so overlapping hits can play without cutting each other off
-        const s = hitmarker.cloneNode();
-        s.volume = 0.5;
+        // Clone so overlapping ticks can play without cutting each other off
+        const s = tickAudios[tickIndex].cloneNode();
+        s.volume = 0.4;
         s.play().catch(() => {});
       } catch (e) {}
     }
@@ -985,7 +1004,7 @@
       { text: 'MOM GET THE CAMERA', emoji: '📷', sound: 'memes/mom-get-the-camera.mp3' },
       { text: 'MLG AIRHORN',      emoji: '📢', sound: 'memes/mlg-airhorn.mp3' },
       { text: '360 NO SCOPE',     emoji: '🎯', sound: 'memes/airhorn.mp3' },
-      { text: 'GET REKT',         emoji: '☠️', sound: 'https://instrumentalfx.co/wp-content/uploads/2017/12/Hitmarker_-_MLG_Sound_Effect.mp3' }
+      { text: 'GET REKT',         emoji: '☠️', sound: 'memes/get-rekt.mp3' }
     ];
 
     const memeEl = document.getElementById('mlgMeme');
@@ -1227,10 +1246,10 @@
           hitmarker.volume = 0.5;
         }).catch(() => {});
       } catch (e) {}
-      // Prime the meme clips too (silently) so landing sounds work on mobile
+      // Prime the meme and tick clips too (silently) so sounds work on mobile
       if (!memeAudioPrimed) {
         memeAudioPrimed = true;
-        memeAudios.forEach(a => {
+        [...memeAudios, ...tickAudios].forEach(a => {
           const vol = a.volume;
           a.muted = true;
           a.play().then(() => {
