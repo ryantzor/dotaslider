@@ -702,7 +702,7 @@
     }
   </style>
 </head>
-<body class="theme-default">
+<body class="theme-mlg">
   <script>
     // Apply the saved theme before first paint to avoid a flash
     try {
@@ -725,8 +725,8 @@
 
   <div class="filters">
     <div class="filter-row" id="themeFilters">
-      <button class="filter-btn active" data-theme="default">Default</button>
-      <button class="filter-btn" data-theme="mlg">MLG</button>
+      <button class="filter-btn" data-theme="default">Default</button>
+      <button class="filter-btn active" data-theme="mlg">MLG</button>
     </div>
     <div class="filter-row" id="attrFilters">
       <button class="filter-btn active" data-attr="any">All Attr</button>
@@ -894,7 +894,7 @@
 
     let currentMode = 'all';
     let currentAttr = 'any';
-    let currentTheme = 'default';
+    let currentTheme = 'mlg';
     let activeHeroes = [];
     let trackItems = [];
 
@@ -1402,8 +1402,8 @@
       btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
     });
 
-    let savedTheme = 'default';
-    try { savedTheme = localStorage.getItem(THEME_KEY) || 'default'; } catch (e) {}
+    let savedTheme = 'mlg';
+    try { savedTheme = localStorage.getItem(THEME_KEY) || 'mlg'; } catch (e) {}
     applyTheme(savedTheme);
 
     // Attribute filters
