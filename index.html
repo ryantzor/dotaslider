@@ -1024,10 +1024,9 @@
     }
 
     // ---- MLG crosshair tick sound ----
-    // The full hitmarker hit, unprocessed: the source has ~1s of silence
-    // before the transient, so the clip starts right at the hit and keeps
-    // the whole decay. One element retriggered in place, no stacking.
-    const tickAudio = new Audio('memes/tick-hitmarker.mp3');
+    // The Call of Duty hitmarker, cut from the original clip with its full
+    // attack and decay. One element retriggered in place, no stacking.
+    const tickAudio = new Audio('memes/tick-cod-hitmarker.mp3');
     tickAudio.preload = 'auto';
     tickAudio.volume = 1;
 
@@ -1035,7 +1034,7 @@
       if (currentTheme !== 'mlg') return;
       const now = performance.now();
       // Let the whole hit ring out before the next one starts
-      if (now - lastHitTime < 70) return;
+      if (now - lastHitTime < 80) return;
       lastHitTime = now;
       try {
         tickAudio.currentTime = 0;
