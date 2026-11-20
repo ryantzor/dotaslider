@@ -53,64 +53,9 @@
       box-shadow: 0 4px 15px rgba(201, 170, 113, 0.4);
     }
 
-    /* ========== WHEEL OF FORTUNE THEME ========== */
-    body.theme-wheel {
-      background: radial-gradient(ellipse at center, #1a0a2e 0%, #0d0520 50%, #2a0a10 100%);
-      color: #ffe066;
-    }
-    body.theme-wheel h1 {
-      background: linear-gradient(90deg, #ffd700, #ff2d55, #ffd700, #00e5ff);
-      background-size: 200% auto;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      animation: rainbow 3s linear infinite;
-      text-shadow: none;
-      font-family: Impact, Haettenschweiler, 'Arial Black', sans-serif;
-      letter-spacing: 4px;
-    }
-    @keyframes rainbow {
-      to { background-position: 200% center; }
-    }
-    body.theme-wheel .subtitle { color: #ff9f43; }
-    body.theme-wheel .filter-btn {
-      background: rgba(255, 215, 0, 0.1);
-      border-color: #ffd700;
-      color: #ffe066;
-    }
-    body.theme-wheel .filter-btn.active {
-      background: linear-gradient(135deg, #ffd700, #ff9f43);
-      color: #1a0a2e;
-      border-color: #ffd700;
-      box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
-    }
-    body.theme-wheel .hero-card {
-      border-color: #ffd700;
-      box-shadow: 0 0 20px rgba(255, 45, 85, 0.3);
-    }
-    body.theme-wheel .hero-card.center {
-      box-shadow: 0 0 0 4px #ffd700, 0 0 30px #ff2d55, 0 15px 40px rgba(255, 215, 0, 0.4);
-      border-color: #ffd700;
-      transform: scale(1.14);
-    }
-    body.theme-wheel .selected-name {
-      color: #ffd700;
-      text-shadow: 0 0 20px #ff2d55, 0 0 40px #ffd700;
-      font-family: Impact, Haettenschweiler, 'Arial Black', sans-serif;
-    }
-    body.theme-wheel .spin-btn {
-      background: linear-gradient(135deg, #ffd700, #ff2d55);
-      color: #1a0a2e;
-      box-shadow: 0 4px 20px rgba(255, 45, 85, 0.5);
-      font-family: Impact, Haettenschweiler, 'Arial Black', sans-serif;
-      letter-spacing: 2px;
-    }
-    body.theme-wheel .hint, body.theme-wheel .count, body.theme-wheel .selected-label {
-      color: #ff9f43;
-    }
-
     /* ========== MLG THEME ========== */
     body.theme-mlg {
-      background: #000;
+      background: transparent;
       color: #39ff14;
       font-family: 'Courier New', monospace;
     }
@@ -255,6 +200,163 @@
       0%   { opacity: 0; transform: scale(0.3) rotate(0deg); }
       20%  { opacity: 1; }
       100% { opacity: 0; transform: scale(1.5) rotate(30deg); }
+    }
+
+    /* ========== MLG ANIMATED BACKGROUND ========== */
+    html { background: #000; }
+
+    #mlgBackground {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      overflow: hidden;
+      opacity: 0;
+      transition: opacity 0.35s ease;
+      background: radial-gradient(ellipse at center, #16002e 0%, #000 72%);
+    }
+    body.theme-mlg #mlgBackground { opacity: 1; }
+    #mlgBackground > div { position: absolute; }
+
+    .mlg-rays {
+      left: 50%;
+      top: 50%;
+      width: 200vmax;
+      height: 200vmax;
+      margin: -100vmax 0 0 -100vmax;
+      background: repeating-conic-gradient(from 0deg,
+        rgba(57, 255, 20, 0.16) 0deg 7deg,
+        transparent 7deg 22deg,
+        rgba(255, 0, 255, 0.16) 22deg 30deg,
+        transparent 30deg 50deg);
+      animation: mlgSpin 16s linear infinite;
+    }
+    @keyframes mlgSpin { to { transform: rotate(360deg); } }
+
+    .mlg-grid {
+      inset: -60%;
+      background-image:
+        linear-gradient(rgba(57, 255, 20, 0.28) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 0, 255, 0.24) 1px, transparent 1px);
+      background-size: 70px 70px;
+      transform: perspective(620px) rotateX(62deg) scale(1.8);
+      opacity: 0.4;
+      animation: mlgGrid 2.2s linear infinite;
+    }
+    @keyframes mlgGrid { to { background-position: 0 70px, 70px 0; } }
+
+    .mlg-stripes {
+      inset: -60%;
+      background: repeating-linear-gradient(45deg,
+        rgba(255, 0, 255, 0.10) 0 16px,
+        transparent 16px 46px);
+      animation: mlgSlide 1.8s linear infinite;
+    }
+    @keyframes mlgSlide { to { transform: translate(46px, 46px); } }
+
+    .mlg-scanlines {
+      inset: 0;
+      background: repeating-linear-gradient(0deg,
+        rgba(0, 0, 0, 0.55) 0 2px,
+        transparent 2px 4px);
+      animation: mlgFlicker 1.9s steps(2) infinite;
+    }
+    @keyframes mlgFlicker {
+      0%, 100% { opacity: 0.3; }
+      50%      { opacity: 0.6; }
+    }
+
+    #mlgBackground::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg,
+        rgba(57, 255, 20, 0.20),
+        rgba(255, 0, 255, 0.22),
+        rgba(0, 255, 255, 0.16));
+      mix-blend-mode: screen;
+      opacity: 0.35;
+      animation: mlgPulse 3.2s ease-in-out infinite alternate;
+    }
+    @keyframes mlgPulse {
+      from { opacity: 0.2; }
+      to   { opacity: 0.65; }
+    }
+
+    .mlg-sprites { inset: 0; }
+    .mlg-sprites span {
+      position: absolute;
+      opacity: 0.75;
+      filter: drop-shadow(0 0 10px #39ff14);
+      animation-name: mlgDrift;
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+      will-change: transform, opacity;
+    }
+    @keyframes mlgDrift {
+      0%   { transform: translate3d(0, 0, 0) rotate(0deg) scale(0.7); opacity: 0.25; }
+      25%  { opacity: 0.9; }
+      50%  { transform: translate3d(28vw, -45vh, 0) rotate(200deg) scale(1.35); }
+      75%  { opacity: 0.7; }
+      100% { transform: translate3d(-18vw, -80vh, 0) rotate(400deg) scale(0.7); opacity: 0; }
+    }
+
+    /* ========== MLG CROSSHAIR SCROLL TICKS ========== */
+    #mlgTicks {
+      position: fixed;
+      inset: 0;
+      z-index: 9998;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .mlg-tick {
+      position: absolute;
+      width: 46px;
+      height: 46px;
+      margin: -23px 0 0 -23px;
+      border: 2px solid rgba(57, 255, 20, 0.9);
+      border-radius: 50%;
+      mix-blend-mode: screen;
+      animation: tickPop 0.55s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+    }
+    .mlg-tick::before,
+    .mlg-tick::after {
+      content: '';
+      position: absolute;
+      background: #39ff14;
+      box-shadow: 0 0 8px #39ff14, 0 0 18px #ff00ff;
+    }
+    .mlg-tick::before {
+      left: 50%;
+      top: 0;
+      width: 2px;
+      height: 100%;
+      transform: translateX(-1px);
+    }
+    .mlg-tick::after {
+      top: 50%;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      transform: translateY(-1px);
+    }
+    .mlg-tick.pink {
+      border-color: rgba(255, 0, 255, 0.9);
+    }
+    .mlg-tick.pink::before,
+    .mlg-tick.pink::after {
+      background: #ff00ff;
+      box-shadow: 0 0 8px #ff00ff, 0 0 18px #39ff14;
+    }
+    @keyframes tickPop {
+      0%   { opacity: 0; transform: scale(0.25) rotate(var(--rot, 0deg)); }
+      30%  { opacity: 1; transform: scale(1.25) rotate(var(--rot, 0deg)); }
+      100% { opacity: 0; transform: scale(1.7) rotate(calc(var(--rot, 0deg) + 20deg)); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #mlgBackground * { animation: none !important; }
+      .mlg-tick { animation-duration: 0.01s; }
     }
 
     /* Shared base styles */
@@ -461,13 +563,29 @@
   </style>
 </head>
 <body class="theme-default">
+  <script>
+    // Apply the saved theme before first paint to avoid a flash
+    try {
+      if (localStorage.getItem('dotaslider-theme') === 'mlg') {
+        document.body.className = 'theme-mlg';
+      }
+    } catch (e) {}
+  </script>
+  <div id="mlgBackground" aria-hidden="true">
+    <div class="mlg-rays"></div>
+    <div class="mlg-grid"></div>
+    <div class="mlg-stripes"></div>
+    <div class="mlg-scanlines"></div>
+    <div class="mlg-sprites" id="mlgSprites"></div>
+  </div>
+  <div id="mlgTicks" aria-hidden="true"></div>
+
   <h1>Dota 2 Hero Roulette</h1>
   <p class="subtitle">Flick • Drag • Scroll wheel • Lands on a hero</p>
 
   <div class="filters">
     <div class="filter-row" id="themeFilters">
       <button class="filter-btn active" data-theme="default">Default</button>
-      <button class="filter-btn" data-theme="wheel">Wheel of Fortune</button>
       <button class="filter-btn" data-theme="mlg">MLG</button>
     </div>
     <div class="filter-row" id="attrFilters">
@@ -824,6 +942,42 @@
       } catch (e) {}
     }
 
+    // ---- MLG animated background ----
+    const MLG_SPRITES = ['🎺', '💥', '🎯', '☠️', '🔥', '👽', '🍕', '🚀', '💀', '🎮', '⚡', '🌀'];
+    function buildMlgBackground() {
+      const layer = document.getElementById('mlgSprites');
+      const count = window.innerWidth < 700 ? 10 : 18;
+      for (let i = 0; i < count; i++) {
+        const s = document.createElement('span');
+        s.textContent = MLG_SPRITES[Math.floor(Math.random() * MLG_SPRITES.length)];
+        s.style.left = (Math.random() * 100) + 'vw';
+        s.style.top = (55 + Math.random() * 65) + 'vh';
+        s.style.fontSize = (1.6 + Math.random() * 2.8).toFixed(1) + 'rem';
+        s.style.animationDuration = (6 + Math.random() * 9).toFixed(1) + 's';
+        s.style.animationDelay = (-Math.random() * 12).toFixed(1) + 's';
+        layer.appendChild(s);
+      }
+    }
+    buildMlgBackground();
+
+    // ---- MLG crosshair ticks ----
+    const mlgTicksEl = document.getElementById('mlgTicks');
+    let liveTicks = 0;
+
+    function spawnMlgTick(x, y) {
+      if (currentTheme !== 'mlg') return;
+      if (liveTicks > 140) return; // safety valve for very fast trackpads
+      const t = document.createElement('span');
+      t.className = 'mlg-tick' + (Math.random() < 0.4 ? ' pink' : '');
+      // Scatter overlapping ticks so rapid scrolling looks like a spray of hitmarkers
+      t.style.left = (x + Math.random() * 36 - 18) + 'px';
+      t.style.top = (y + Math.random() * 36 - 18) + 'px';
+      t.style.setProperty('--rot', (Math.random() * 70 - 35).toFixed(1) + 'deg');
+      mlgTicksEl.appendChild(t);
+      liveTicks++;
+      t.addEventListener('animationend', () => { t.remove(); liveTicks--; }, { once: true });
+    }
+
     // ---- MLG landing memes ----
     const MLG_MEMES = [
       { text: 'OH BABY A TRIPLE', emoji: '🎺', sound: 'memes/oh-baby-a-triple.mp3' },
@@ -939,6 +1093,7 @@
       if (!isDragging) return;
       e.preventDefault();
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
       const dx = clientX - lastX;
       currentX += dx;
 
@@ -951,6 +1106,7 @@
 
       // MLG hitmarker while finger/mouse dragging (every meaningful move)
       if (Math.abs(dx) > 2) {
+        spawnMlgTick(clientX, clientY);
         playHitmarker();
       }
     }
@@ -1010,6 +1166,7 @@
       velocity += delta * 0.02 * boost;
 
       // MLG hitmarker on every scroll event
+      spawnMlgTick(e.clientX, e.clientY);
       playHitmarker();
 
       startAnim();
@@ -1023,15 +1180,26 @@
       startAnim();
     });
 
-    // Theme toggle
-    document.querySelectorAll('#themeFilters .filter-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('#themeFilters .filter-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentTheme = btn.dataset.theme;
-        document.body.className = 'theme-' + currentTheme;
+    // Theme toggle (remembered across visits)
+    const THEME_KEY = 'dotaslider-theme';
+
+    function applyTheme(theme) {
+      if (theme !== 'mlg') theme = 'default';
+      currentTheme = theme;
+      document.body.className = 'theme-' + theme;
+      document.querySelectorAll('#themeFilters .filter-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.theme === theme);
       });
+      try { localStorage.setItem(THEME_KEY, theme); } catch (e) {}
+    }
+
+    document.querySelectorAll('#themeFilters .filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
     });
+
+    let savedTheme = 'default';
+    try { savedTheme = localStorage.getItem(THEME_KEY) || 'default'; } catch (e) {}
+    applyTheme(savedTheme);
 
     // Attribute filters
     document.querySelectorAll('#attrFilters .filter-btn').forEach(btn => {
