@@ -1024,16 +1024,18 @@
     }
 
     // ---- MLG crosshair tick sound ----
-    // One short hitmarker tick, retriggered in place on every tick so rapid
-    // scrolling doesn't stack overlapping copies into a buzzing mess
+    // The full hitmarker hit, unprocessed: the source has ~1s of silence
+    // before the transient, so the clip starts right at the hit and keeps
+    // the whole decay. One element retriggered in place, no stacking.
     const tickAudio = new Audio('memes/tick-hitmarker.mp3');
     tickAudio.preload = 'auto';
-    tickAudio.volume = 0.5;
+    tickAudio.volume = 1;
 
     function playHitmarker() {
       if (currentTheme !== 'mlg') return;
       const now = performance.now();
-      if (now - lastHitTime < 40) return;
+      // Let the whole hit ring out before the next one starts
+      if (now - lastHitTime < 70) return;
       lastHitTime = now;
       try {
         tickAudio.currentTime = 0;
