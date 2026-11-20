@@ -374,6 +374,104 @@
       opacity: 0.8;
     }
 
+    /* GitHub source link (top-left) */
+    .github-link {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 250;
+      width: 38px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 9px;
+      background: rgba(0, 0, 0, 0.5);
+      color: #e8e6e3;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(4px);
+      transition: transform 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+    .github-link:hover { transform: scale(1.06); color: #39ff14; border-color: #39ff14; }
+    .github-link svg { width: 20px; height: 20px; fill: currentColor; }
+
+    /* Daily bounties (gambling) strip */
+    .bounty-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 12px;
+      padding: 8px 14px;
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 215, 0, 0.4);
+      max-width: 720px;
+    }
+    .bounty-label {
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #ffd700;
+      text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+    }
+    .bounty-list { display: flex; gap: 12px; }
+    .bounty-item { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .bounty-item img {
+      width: 46px;
+      height: 46px;
+      border-radius: 7px;
+      object-fit: cover;
+      border: 2px solid #ffd700;
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    }
+    .bounty-item span {
+      font-size: 0.6rem;
+      font-weight: 700;
+      max-width: 64px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #ffd700;
+    }
+
+    /* Bounty hit badge under the selected hero */
+    .bounty-hit {
+      display: none;
+      margin: 8px auto 0;
+      padding: 4px 14px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #000;
+      background: linear-gradient(135deg, #ffd700, #ff9d00);
+      box-shadow: 0 0 16px rgba(255, 215, 0, 0.75);
+    }
+    .bounty-hit.show { display: inline-block; animation: bountyPop 0.5s cubic-bezier(0.2, 0.8, 0.3, 1.2); }
+    @keyframes bountyPop {
+      0% { transform: scale(0.4); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Theme-switcher label so it reads as a theme picker, not a filter */
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .filter-group-label {
+      font-size: 0.66rem;
+      font-weight: 800;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      opacity: 0.6;
+    }
+
     .filters {
       display: flex;
       flex-direction: column;
@@ -706,10 +804,10 @@
   <script>
     // Apply the saved theme before first paint to avoid a flash
     try {
-      if (localStorage.getItem('dotaslider-theme') === 'mlg') {
-        document.body.className = 'theme-mlg';
-      }
-    } catch (e) {}
+      document.body.className = localStorage.getItem('dotaslider-theme') === 'default'
+        ? 'theme-default'
+        : 'theme-mlg';
+    } catch (e) { document.body.className = 'theme-mlg'; }
   </script>
   <div id="mlgBackground" aria-hidden="true">
     <div class="mlg-rays"></div>
@@ -720,13 +818,25 @@
   </div>
   <div id="mlgTicks" aria-hidden="true"></div>
 
+  <a class="github-link" href="https://github.com/ryantzor/dotaslider" target="_blank" rel="noopener" title="View source on GitHub" aria-label="GitHub repository">
+    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+  </a>
+
   <h1>Dota 2 Hero Roulette</h1>
   <p class="subtitle">Flick • Drag • Scroll wheel • Lands on a hero</p>
 
+  <div id="bountyBar" class="bounty-bar">
+    <span class="bounty-label">💰 Daily Bounties</span>
+    <div class="bounty-list" id="bountyList"></div>
+  </div>
+
   <div class="filters">
-    <div class="filter-row" id="themeFilters">
-      <button class="filter-btn" data-theme="default">Default</button>
-      <button class="filter-btn active" data-theme="mlg">MLG</button>
+    <div class="filter-group">
+      <span class="filter-group-label">Theme</span>
+      <div class="filter-row" id="themeFilters">
+        <button class="filter-btn" data-theme="default">🎮 Classic</button>
+        <button class="filter-btn active" data-theme="mlg">🌀 MLG</button>
+      </div>
     </div>
     <div class="filter-row" id="attrFilters">
       <button class="filter-btn active" data-attr="any">All Attr</button>
@@ -745,6 +855,7 @@
     <div class="selected-label">Selected Hero</div>
     <div class="selected-name" id="selectedName">—</div>
     <div class="count" id="heroCount"></div>
+    <div class="bounty-hit" id="bountyHit"></div>
   </div>
 
   <button class="spin-btn" id="spinBtn">Spin Random</button>
@@ -753,6 +864,8 @@
 
   <!-- MLG Hitmarker sound -->
   <audio id="hitmarker" preload="auto" src="memes/hitmarker.mp3"></audio>
+  <!-- Classic hero respawn sound -->
+  <audio id="respawn" preload="auto" src="memes/respawn.mp3"></audio>
 
   <!-- MLG landing meme popup -->
   <div id="mlgMeme" aria-hidden="true">
@@ -903,6 +1016,42 @@
     const heroCountEl = document.getElementById('heroCount');
     const wrapper = document.getElementById('wrapper');
     const hitmarker = document.getElementById('hitmarker');
+    const respawnAudio = document.getElementById('respawn');
+    const bountyListEl = document.getElementById('bountyList');
+    const bountyHitEl = document.getElementById('bountyHit');
+
+    // ---- Daily bounties (gambling) ----
+    // Three heroes are picked as the day's bounties. The ranking follows a
+    // "datetime-as-seconds % N + 2" equation, snapped to the start of the UTC
+    // day so the three stays fixed until midnight and re-rolls each day.
+    const bounties = (() => {
+      const N = ALL_HEROES.length;
+      const nowSecs = Math.floor(Date.now() / 1000);
+      const daySecs = nowSecs - (nowSecs % 86400);
+      const base = (daySecs % N) + 2;                // seconds % N + 2
+      const step = Math.max(3, Math.floor(N / 3));   // stagger the other two
+      const idx = [base, base + step, base + 2 * step].map(i => ((i % N) + N) % N);
+      return idx.map(i => ALL_HEROES[i]);
+    })();
+
+    function isBounty(name) {
+      return bounties.some(h => h.name === name);
+    }
+
+    function renderBounties() {
+      bountyListEl.innerHTML = '';
+      bounties.forEach(h => {
+        const it = document.createElement('div');
+        it.className = 'bounty-item';
+        it.innerHTML = `
+          <img src="${IMG_BASE}${h.id}.png" alt="${h.name}" loading="lazy"
+               onerror="this.src='https://cdn.dota2.com/apps/dota2/images/heroes/${h.id}_lg.png'">
+          <span>${h.name}</span>
+        `;
+        bountyListEl.appendChild(it);
+      });
+    }
+    renderBounties();
 
     let currentX = 0;
     let velocity = 0;
@@ -1006,6 +1155,8 @@
           selectedNameEl.classList.remove('pop');
           void selectedNameEl.offsetWidth;
           selectedNameEl.classList.add('pop');
+          // highlight when the selected hero is one of today's bounties
+          bountyHitEl.classList.toggle('show', isBounty(name));
         }
         centerIndex = idx;
       }
@@ -1097,7 +1248,7 @@
     function setMuted(m) {
       soundMuted = m;
       try { localStorage.setItem('dotaslider-muted', m ? '1' : '0'); } catch (e) {}
-      if (m) { try { tickAudio.pause(); } catch (e) {} }
+      if (m) { try { tickAudio.pause(); } catch (e) {} try { respawnAudio.pause(); } catch (e) {} }
       updateSoundState();
     }
 
@@ -1255,15 +1406,25 @@
     }
 
     function onLandedHero() {
-      if (currentTheme !== 'mlg') return;
       const now = performance.now();
-      // Re-settling on the same hero shouldn't replay a meme, and rapid
-      // little nudges shouldn't spam the overlay
+      // Re-settling on the same hero shouldn't replay, and rapid little
+      // nudges shouldn't spam the sound/overlay
       if (centerIndex === lastLandingIndex && now - lastMemeTime < 2500) return;
       if (now - lastMemeTime < 400) return;
       lastLandingIndex = centerIndex;
       lastMemeTime = now;
-      showMlgMeme(nextMeme());
+
+      if (currentTheme === 'mlg') {
+        showMlgMeme(nextMeme());
+      } else {
+        // Classic theme: hero respawn sound on selection
+        if (soundMuted) return;
+        unlockAudio();
+        try {
+          respawnAudio.currentTime = 0;
+          respawnAudio.play().catch(() => {});
+        } catch (e) {}
+      }
     }
 
     function onPointerDown(e) {
