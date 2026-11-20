@@ -684,15 +684,16 @@
       if (!isDragging) {
         // Drain queued wheel momentum into velocity (weighted feel)
         if (Math.abs(pendingScroll) > 0.1) {
-          const drain = pendingScroll * 0.12;
+          const drain = pendingScroll * 0.14;
           velocity += drain;
           pendingScroll -= drain;
         } else {
           pendingScroll = 0;
         }
 
-        // Friction – lower while there is still pending scroll so it keeps rolling
-        const friction = Math.abs(pendingScroll) > 1 ? 0.985 : 0.94;
+        // Friction – slightly looser while there is still pending scroll so it
+        // keeps rolling, then settles a touch quicker once the queue is empty
+        const friction = Math.abs(pendingScroll) > 1 ? 0.975 : 0.93;
         velocity *= friction;
 
         // Soft snap only when everything has settled
@@ -791,30 +792,38 @@
       e.preventDefault();
 
       const now = performance.now();
-      const delta = -e.deltaY;
+
+      // Normalize delta across devices: some browsers report lines or pages
+      // instead of pixels (Firefox, some trackpads), which previously made a
+      // single notch jump far more than on other machines.
+      const deltaModeScale = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? wrapper.clientWidth : 1;
+      // Clamp a single event so trackpad momentum spikes don't fling the track
+      const delta = Math.max(-300, Math.min(300, -e.deltaY * deltaModeScale));
 
       // Track recent wheel events (last 220ms) to measure how hard user is flicking
       recentWheelTimes.push(now);
       recentWheelTimes = recentWheelTimes.filter(t => now - t < 220);
       const events = recentWheelTimes.length;
 
-      // Gradual stepped boost (~10% / 20% / 35% / 60% intensity tiers)
+      // Gentle stepped boost for deliberate flicks
       //   1 event  → 1.00  (base)
-      //   2–3      → 1.10  (~10%)
-      //   4–5      → 1.20  (~20%)
-      //   6–8      → 1.35  (~35%)
-      //   9+       → 1.60  (~60%)
+      //   2–3      → 1.07
+      //   4–5      → 1.16
+      //   6–8      → 1.28
+      //   9+       → 1.45
       let boost = 1.0;
-      if (events >= 9)      boost = 1.60;
-      else if (events >= 6) boost = 1.35;
-      else if (events >= 4) boost = 1.20;
-      else if (events >= 2) boost = 1.10;
+      if (events >= 9)      boost = 1.45;
+      else if (events >= 6) boost = 1.28;
+      else if (events >= 4) boost = 1.16;
+      else if (events >= 2) boost = 1.07;
 
-      pendingScroll += delta * 1.35 * boost;
-      pendingScroll = Math.max(-900, Math.min(900, pendingScroll));
+      // One notch is roughly half a card; the queue is capped to a couple of
+      // cards so rapid scrolling feels smooth instead of runaway
+      pendingScroll += delta * 0.6 * boost;
+      pendingScroll = Math.max(-CARD_WIDTH * 2.5, Math.min(CARD_WIDTH * 2.5, pendingScroll));
 
-      // Immediate velocity also gets the same gradual boost
-      velocity += delta * 0.10 * boost;
+      // Immediate velocity also gets the same gentle boost
+      velocity += delta * 0.02 * boost;
 
       // MLG hitmarker on every scroll event
       playHitmarker();
