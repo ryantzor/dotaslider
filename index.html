@@ -193,6 +193,70 @@
       background: linear-gradient(to left, #000 10%, transparent);
     }
 
+    /* ========== MLG LANDING MEME POPUP ========== */
+    #mlgMeme {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    #mlgMeme.show { display: flex; }
+    #mlgMeme .flash {
+      position: absolute;
+      inset: 0;
+      background: #39ff14;
+      opacity: 0;
+    }
+    #mlgMeme.show .flash {
+      animation: memeFlash 0.55s ease-out forwards;
+    }
+    @keyframes memeFlash {
+      0%   { opacity: 0.85; }
+      100% { opacity: 0; }
+    }
+    #mlgMeme .meme-text {
+      position: relative;
+      z-index: 2;
+      max-width: 92vw;
+      font-family: Impact, Haettenschweiler, 'Arial Black', sans-serif;
+      font-size: clamp(2.4rem, 11vw, 8rem);
+      line-height: 0.9;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      color: #fff;
+      -webkit-text-stroke: 3px #000;
+      text-shadow: 0 0 15px #ff00ff, 0 0 35px #39ff14,
+                   8px 8px 0 #ff00ff, -8px -8px 0 #39ff14;
+      opacity: 0;
+    }
+    #mlgMeme.show .meme-text {
+      animation: memeSlam 1.9s cubic-bezier(.2, 1.4, .3, 1) forwards;
+    }
+    @keyframes memeSlam {
+      0%   { opacity: 0; transform: rotate(-14deg) scale(0.2); }
+      12%  { opacity: 1; transform: rotate(-6deg) scale(1.3); }
+      22%  { transform: rotate(-5deg) scale(1); }
+      75%  { opacity: 1; transform: rotate(-5deg) scale(1.04); }
+      100% { opacity: 0; transform: rotate(-5deg) scale(1.1); }
+    }
+    #mlgMeme .meme-emoji {
+      position: fixed;
+      z-index: 1;
+      font-size: clamp(2rem, 6vw, 4.5rem);
+      filter: drop-shadow(0 0 12px #39ff14);
+      animation: memeFloat 1.6s ease-out forwards;
+    }
+    @keyframes memeFloat {
+      0%   { opacity: 0; transform: scale(0.3) rotate(0deg); }
+      20%  { opacity: 1; }
+      100% { opacity: 0; transform: scale(1.5) rotate(30deg); }
+    }
+
     /* Shared base styles */
     h1 {
       font-size: 1.7rem;
@@ -430,6 +494,13 @@
 
   <!-- MLG Hitmarker sound -->
   <audio id="hitmarker" preload="auto" src="https://instrumentalfx.co/wp-content/uploads/2017/12/Hitmarker_-_MLG_Sound_Effect.mp3"></audio>
+
+  <!-- MLG landing meme popup -->
+  <div id="mlgMeme" aria-hidden="true">
+    <div class="flash"></div>
+    <div class="meme-text" id="memeText"></div>
+    <div id="memeEmojis"></div>
+  </div>
 
   <script>
     const ALL_HEROES = [
@@ -708,6 +779,7 @@
             velocity = 0;
             pendingScroll = 0;
             updateTransform();
+            onLandedHero();
             return;
           }
         }
@@ -718,6 +790,19 @@
 
       if (Math.abs(velocity) > 0.04 || Math.abs(pendingScroll) > 0.1 || isDragging) {
         animId = requestAnimationFrame(animate);
+        return;
+      }
+
+      // Velocity can fall below the cutoff while the card is still a pixel or
+      // two off-center. Keep easing until it actually reaches the target so
+      // the landing callback always fires.
+      if (!isDragging && Math.abs(pendingScroll) < 0.5) {
+        const centerPos = -currentX + wrapper.clientWidth / 2;
+        const targetIdx = Math.round((centerPos - CARD_WIDTH / 2) / CARD_WIDTH);
+        const targetX = -(targetIdx * CARD_WIDTH) + (wrapper.clientWidth / 2 - CARD_WIDTH / 2);
+        if (Math.abs(targetX - currentX) > 0.4) {
+          animId = requestAnimationFrame(animate);
+        }
       }
     }
 
@@ -737,6 +822,105 @@
         s.volume = 0.5;
         s.play().catch(() => {});
       } catch (e) {}
+    }
+
+    // ---- MLG landing memes ----
+    const MLG_MEMES = [
+      { text: 'OH BABY A TRIPLE', emoji: '🎺', sound: 'memes/oh-baby-a-triple.mp3' },
+      { text: 'BOOM HEADSHOT',    emoji: '💥', sound: 'memes/boom-headshot.mp3' },
+      { text: 'MOM GET THE CAMERA', emoji: '📷', sound: 'memes/mom-get-the-camera.mp3' },
+      { text: 'MLG AIRHORN',      emoji: '📢', sound: 'memes/mlg-airhorn.mp3' },
+      { text: '360 NO SCOPE',     emoji: '🎯', sound: 'memes/airhorn.mp3' },
+      { text: 'GET REKT',         emoji: '☠️', sound: 'https://instrumentalfx.co/wp-content/uploads/2017/12/Hitmarker_-_MLG_Sound_Effect.mp3' }
+    ];
+
+    const memeEl = document.getElementById('mlgMeme');
+    const memeTextEl = document.getElementById('memeText');
+    const memeEmojisEl = document.getElementById('memeEmojis');
+    const memeAudios = MLG_MEMES.map(m => {
+      const a = new Audio(m.sound);
+      a.preload = 'auto';
+      a.volume = 0.65;
+      return a;
+    });
+
+    let memeOrder = [];
+    let memeCursor = 0;
+    let lastMemePlayed = -1;     // index of the meme shown last (for shuffle)
+    let lastLandingIndex = -1;   // hero index of the last meme trigger
+    let lastMemeTime = 0;
+    let memeTimer = null;
+    let memeAudioPrimed = false;
+
+    function shuffleMemeOrder() {
+      memeOrder = MLG_MEMES.map((_, i) => i);
+      for (let i = memeOrder.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [memeOrder[i], memeOrder[j]] = [memeOrder[j], memeOrder[i]];
+      }
+      // Don't repeat the previous meme at a cycle boundary
+      if (memeOrder[0] === lastMemePlayed && memeOrder.length > 1) {
+        [memeOrder[0], memeOrder[1]] = [memeOrder[1], memeOrder[0]];
+      }
+    }
+
+    function nextMeme() {
+      if (memeCursor >= memeOrder.length) {
+        shuffleMemeOrder();
+        memeCursor = 0;
+      }
+      lastMemePlayed = memeOrder[memeCursor++];
+      return lastMemePlayed;
+    }
+
+    function stopMemeAudio() {
+      memeAudios.forEach(a => {
+        try { a.pause(); a.currentTime = 0; } catch (e) {}
+      });
+    }
+
+    function showMlgMeme(idx) {
+      const meme = MLG_MEMES[idx];
+      if (!meme) return;
+
+      memeTextEl.textContent = meme.text;
+      memeEmojisEl.innerHTML = '';
+      for (let i = 0; i < 7; i++) {
+        const span = document.createElement('span');
+        span.className = 'meme-emoji';
+        span.textContent = meme.emoji;
+        span.style.left = (6 + Math.random() * 82) + 'vw';
+        span.style.top = (8 + Math.random() * 78) + 'vh';
+        span.style.animationDelay = (Math.random() * 0.25).toFixed(2) + 's';
+        span.style.transform = 'rotate(' + Math.round(Math.random() * 60 - 30) + 'deg)';
+        memeEmojisEl.appendChild(span);
+      }
+
+      memeEl.classList.remove('show');
+      void memeEl.offsetWidth;
+      memeEl.classList.add('show');
+
+      clearTimeout(memeTimer);
+      memeTimer = setTimeout(() => memeEl.classList.remove('show'), 1900);
+
+      stopMemeAudio();
+      const audio = memeAudios[idx];
+      if (audio) {
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+      }
+    }
+
+    function onLandedHero() {
+      if (currentTheme !== 'mlg') return;
+      const now = performance.now();
+      // Re-settling on the same hero shouldn't replay a meme, and rapid
+      // little nudges shouldn't spam the overlay
+      if (centerIndex === lastLandingIndex && now - lastMemeTime < 2500) return;
+      if (now - lastMemeTime < 400) return;
+      lastLandingIndex = centerIndex;
+      lastMemeTime = now;
+      showMlgMeme(nextMeme());
     }
 
     function onPointerDown(e) {
@@ -875,6 +1059,20 @@
           hitmarker.volume = 0.5;
         }).catch(() => {});
       } catch (e) {}
+      // Prime the meme clips too (silently) so landing sounds work on mobile
+      if (!memeAudioPrimed) {
+        memeAudioPrimed = true;
+        memeAudios.forEach(a => {
+          const vol = a.volume;
+          a.muted = true;
+          a.play().then(() => {
+            a.pause();
+            a.currentTime = 0;
+            a.muted = false;
+            a.volume = vol;
+          }).catch(() => { a.muted = false; a.volume = vol; });
+        });
+      }
       window.removeEventListener('click', unlockAudio);
       window.removeEventListener('touchstart', unlockAudio);
       window.removeEventListener('wheel', unlockAudio);
