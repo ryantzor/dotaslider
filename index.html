@@ -654,47 +654,52 @@
       #themeFilters .filter-btn[data-theme="mlg"] { animation: none !important; }
     }
 
-    /* Sound toggle + unlock hint */
+    /* Sound control: compact corner toggle when on, unmissable when off */
     .sound-btn {
       position: fixed;
       top: 14px;
       right: 14px;
-      z-index: 200;
-      padding: 8px 12px;
-      border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.18);
-      background: rgba(0,0,0,0.45);
-      color: #e8e8f0;
-      font-weight: 700;
-      font-size: 0.85rem;
+      z-index: 250;
+      padding: 9px 14px;
+      border-radius: 10px;
+      border: 2px solid rgba(57, 255, 20, 0.6);
+      background: rgba(0, 0, 0, 0.55);
+      color: #d4ffb0;
+      font-weight: 800;
+      font-size: 0.9rem;
       cursor: pointer;
       backdrop-filter: blur(4px);
+      transition: transform 0.25s ease, top 0.25s ease, left 0.25s ease, right 0.25s ease,
+                  padding 0.25s ease, font-size 0.25s ease, box-shadow 0.25s ease, color 0.25s ease;
     }
-    .sound-btn.muted { color: #ff7b7b; border-color: rgba(255,123,123,0.5); }
-    body.theme-mlg .sound-btn {
-      border-color: #39ff14;
-      color: #d4ffb0;
-      text-shadow: 0 0 6px #39ff14;
-    }
-    body.theme-mlg .sound-btn.muted { border-color: #ff7b7b; color: #ffb3b3; text-shadow: none; }
-    #soundLockHint {
-      position: fixed;
-      bottom: 20px;
+    .sound-btn.muted { color: #ff7b7b; border-color: rgba(255, 123, 123, 0.5); }
+    .sound-btn.attention {
+      top: 96px;
+      right: auto;
       left: 50%;
       transform: translateX(-50%);
-      z-index: 300;
-      padding: 10px 16px;
-      border-radius: 10px;
-      background: rgba(0,0,0,0.85);
-      color: #fff;
-      font-weight: 700;
-      font-size: 0.9rem;
-      box-shadow: 0 0 20px rgba(57,255,20,0.5);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s ease;
+      font-size: 1.35rem;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      padding: 18px 32px;
+      border-radius: 14px;
+      border: 2px solid #b6ffcb;
+      background: linear-gradient(135deg, #39ff14, #0fe08a);
+      color: #000;
+      text-shadow: none;
+      box-shadow:
+        0 0 0 4px rgba(57, 255, 20, 0.45),
+        0 0 24px #39ff14,
+        0 0 60px #ff00ff;
+      animation: soundBtnPulse 1.4s ease-in-out infinite;
     }
-    #soundLockHint.show { opacity: 1; }
+    @keyframes soundBtnPulse {
+      from { box-shadow: 0 0 0 4px rgba(57,255,20,0.4), 0 0 18px #39ff14, 0 0 44px #ff00ff; transform: translateX(-50%) scale(1); }
+      to   { box-shadow: 0 0 0 8px rgba(57,255,20,0.7), 0 0 34px #39ff14, 0 0 90px #ff00ff; transform: translateX(-50%) scale(1.06); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .sound-btn.attention { animation: none; }
+    }
   </style>
 </head>
 <body class="theme-default">
@@ -743,9 +748,8 @@
   </div>
 
   <button class="spin-btn" id="spinBtn">Spin Random</button>
-  <button class="sound-btn" id="soundBtn" title="Toggle hitmarker sound">🔊 On</button>
+  <button class="sound-btn" id="soundBtn" title="Toggle hitmarker sound">🔊 Enable Sound</button>
   <p class="hint">Drag / swipe / scroll wheel • lands with momentum</p>
-  <div id="soundLockHint" role="status">🔊 Click or tap once to enable sound</div>
 
   <!-- MLG Hitmarker sound -->
   <audio id="hitmarker" preload="auto" src="memes/hitmarker.mp3"></audio>
@@ -1074,27 +1078,44 @@
     tickAudio.preload = 'auto';
     tickAudio.volume = 1;
 
-    // Sound mute toggle (persisted). Muting silences the hitmarker tick and
-    // the landing memes, but keeps the crosshair visuals.
+    // Sound control. One button that's super obvious when sound is off
+    // (muted, or the browser still blocks audio until a first gesture) and
+    // settles into a small corner toggle once sound is actually on.
     const soundBtn = document.getElementById('soundBtn');
-    const soundLockHint = document.getElementById('soundLockHint');
     let soundMuted = false;
     try { soundMuted = localStorage.getItem('dotaslider-muted') === '1'; } catch (e) {}
+
+    function soundOff() { return soundMuted || !audioUnlocked; }
+
+    function updateSoundState() {
+      const off = soundOff();
+      soundBtn.classList.toggle('attention', off);
+      soundBtn.classList.toggle('muted', soundMuted);
+      soundBtn.textContent = off ? '🔊 Enable Sound' : '🔊 On';
+    }
+
     function setMuted(m) {
       soundMuted = m;
       try { localStorage.setItem('dotaslider-muted', m ? '1' : '0'); } catch (e) {}
-      soundBtn.textContent = m ? '🔇 Muted' : '🔊 On';
-      soundBtn.classList.toggle('muted', m);
       if (m) { try { tickAudio.pause(); } catch (e) {} }
+      updateSoundState();
     }
-    setMuted(soundMuted);
-    soundBtn.addEventListener('click', () => setMuted(!soundMuted));
+
+    soundBtn.addEventListener('click', () => {
+      if (soundOff()) {
+        // Big "enable sound" button: unmute and unlock via this click gesture
+        setMuted(false);
+        unlockAudio();
+        if (currentTheme === 'mlg') { lastHitTime = 0; playHitmarker(); }
+      } else {
+        setMuted(true);
+      }
+    });
 
     function playHitmarker() {
       if (currentTheme !== 'mlg') return;
       if (soundMuted) return;
       unlockAudio();
-      if (!audioUnlocked) soundLockHint.classList.add('show');
       const now = performance.now();
       // Let the whole hit ring out before the next one starts
       if (now - lastHitTime < 80) return;
@@ -1414,7 +1435,7 @@
           audioUnlocked = true;
           hitmarker.pause();
           hitmarker.currentTime = 0;
-          soundLockHint.classList.remove('show');
+          updateSoundState();
           ['pointerdown','pointerup','keydown','touchend','touchstart','click','wheel'].forEach(ev =>
             window.removeEventListener(ev, unlockAudio, { capture: false })
           );
@@ -1442,6 +1463,8 @@
     window.addEventListener('touchstart', unlockAudio);
     window.addEventListener('click', unlockAudio);
     window.addEventListener('wheel', unlockAudio, { passive: true });
+
+    updateSoundState();
 
     rebuildTrack();
   </script>
