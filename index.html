@@ -653,6 +653,48 @@
       .mlg-tick { animation-duration: 0.01s; }
       #themeFilters .filter-btn[data-theme="mlg"] { animation: none !important; }
     }
+
+    /* Sound toggle + unlock hint */
+    .sound-btn {
+      position: fixed;
+      top: 14px;
+      right: 14px;
+      z-index: 200;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(0,0,0,0.45);
+      color: #e8e8f0;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+    }
+    .sound-btn.muted { color: #ff7b7b; border-color: rgba(255,123,123,0.5); }
+    body.theme-mlg .sound-btn {
+      border-color: #39ff14;
+      color: #d4ffb0;
+      text-shadow: 0 0 6px #39ff14;
+    }
+    body.theme-mlg .sound-btn.muted { border-color: #ff7b7b; color: #ffb3b3; text-shadow: none; }
+    #soundLockHint {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 300;
+      padding: 10px 16px;
+      border-radius: 10px;
+      background: rgba(0,0,0,0.85);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.9rem;
+      box-shadow: 0 0 20px rgba(57,255,20,0.5);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    #soundLockHint.show { opacity: 1; }
   </style>
 </head>
 <body class="theme-default">
@@ -701,7 +743,9 @@
   </div>
 
   <button class="spin-btn" id="spinBtn">Spin Random</button>
+  <button class="sound-btn" id="soundBtn" title="Toggle hitmarker sound">🔊 On</button>
   <p class="hint">Drag / swipe / scroll wheel • lands with momentum</p>
+  <div id="soundLockHint" role="status">🔊 Click or tap once to enable sound</div>
 
   <!-- MLG Hitmarker sound -->
   <audio id="hitmarker" preload="auto" src="memes/hitmarker.mp3"></audio>
@@ -1030,9 +1074,27 @@
     tickAudio.preload = 'auto';
     tickAudio.volume = 1;
 
+    // Sound mute toggle (persisted). Muting silences the hitmarker tick and
+    // the landing memes, but keeps the crosshair visuals.
+    const soundBtn = document.getElementById('soundBtn');
+    const soundLockHint = document.getElementById('soundLockHint');
+    let soundMuted = false;
+    try { soundMuted = localStorage.getItem('dotaslider-muted') === '1'; } catch (e) {}
+    function setMuted(m) {
+      soundMuted = m;
+      try { localStorage.setItem('dotaslider-muted', m ? '1' : '0'); } catch (e) {}
+      soundBtn.textContent = m ? '🔇 Muted' : '🔊 On';
+      soundBtn.classList.toggle('muted', m);
+      if (m) { try { tickAudio.pause(); } catch (e) {} }
+    }
+    setMuted(soundMuted);
+    soundBtn.addEventListener('click', () => setMuted(!soundMuted));
+
     function playHitmarker() {
       if (currentTheme !== 'mlg') return;
+      if (soundMuted) return;
       unlockAudio();
+      if (!audioUnlocked) soundLockHint.classList.add('show');
       const now = performance.now();
       // Let the whole hit ring out before the next one starts
       if (now - lastHitTime < 80) return;
@@ -1162,10 +1224,12 @@
       memeTimer = setTimeout(() => memeEl.classList.remove('show'), 1900);
 
       stopMemeAudio();
-      const audio = memeAudios[idx];
-      if (audio) {
-        audio.currentTime = 0;
-        audio.play().catch(() => {});
+      if (!soundMuted) {
+        const audio = memeAudios[idx];
+        if (audio) {
+          audio.currentTime = 0;
+          audio.play().catch(() => {});
+        }
       }
     }
 
@@ -1338,11 +1402,11 @@
 
 
     // Unlock audio on the first user gesture. Browsers only allow sound after
-    // an activate-triggering input (mousedown/pointerdown/touchstart/keydown),
-    // so we wire all of those plus click and wheel as a belt-and-suspenders
-    // fallback. Kept idempotent so repeated scroll/drag ticks are safe.
+    // an activation-granting input, so we wire every one we can: pointerdown,
+    // pointerup, keydown, touchend, touchstart, click, and wheel as fallback.
     let audioUnlocked = false;
     function unlockAudio() {
+      if (soundMuted) return; // don't bother unlocking while muted
       if (audioUnlocked) return;
       try {
         const p = hitmarker.play();
@@ -1350,11 +1414,10 @@
           audioUnlocked = true;
           hitmarker.pause();
           hitmarker.currentTime = 0;
-          window.removeEventListener('pointerdown', unlockAudio);
-          window.removeEventListener('keydown', unlockAudio);
-          window.removeEventListener('touchstart', unlockAudio);
-          window.removeEventListener('click', unlockAudio);
-          window.removeEventListener('wheel', unlockAudio);
+          soundLockHint.classList.remove('show');
+          ['pointerdown','pointerup','keydown','touchend','touchstart','click','wheel'].forEach(ev =>
+            window.removeEventListener(ev, unlockAudio, { capture: false })
+          );
         }).catch(() => {});
       } catch (e) {}
       // Prime the meme clips (muted) so they're ready the moment a meme fires
@@ -1373,7 +1436,9 @@
       }
     }
     window.addEventListener('pointerdown', unlockAudio);
+    window.addEventListener('pointerup', unlockAudio);
     window.addEventListener('keydown', unlockAudio);
+    window.addEventListener('touchend', unlockAudio);
     window.addEventListener('touchstart', unlockAudio);
     window.addEventListener('click', unlockAudio);
     window.addEventListener('wheel', unlockAudio, { passive: true });
