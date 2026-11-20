@@ -1011,21 +1011,20 @@
     }
 
     // ---- MLG crosshair tick sound ----
-    // One short hitmarker tick for every scroll/drag tick
+    // One short hitmarker tick, retriggered in place on every tick so rapid
+    // scrolling doesn't stack overlapping copies into a buzzing mess
     const tickAudio = new Audio('memes/tick-hitmarker.mp3');
     tickAudio.preload = 'auto';
-    tickAudio.volume = 0.45;
+    tickAudio.volume = 0.5;
 
     function playHitmarker() {
       if (currentTheme !== 'mlg') return;
       const now = performance.now();
-      if (now - lastHitTime < 35) return;
+      if (now - lastHitTime < 40) return;
       lastHitTime = now;
       try {
-        // Clone so overlapping ticks can play without cutting each other off
-        const s = tickAudio.cloneNode();
-        s.volume = 0.4;
-        s.play().catch(() => {});
+        tickAudio.currentTime = 0;
+        tickAudio.play().catch(() => {});
       } catch (e) {}
     }
 
