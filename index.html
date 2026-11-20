@@ -1032,6 +1032,7 @@
 
     function playHitmarker() {
       if (currentTheme !== 'mlg') return;
+      unlockAudio();
       const now = performance.now();
       // Let the whole hit ring out before the next one starts
       if (now - lastHitTime < 80) return;
@@ -1268,12 +1269,28 @@
       // Immediate velocity also gets the same gentle boost
       velocity += delta * 0.02 * boost;
 
-      // MLG hitmarker on every scroll event
-      spawnMlgTick(e.clientX, e.clientY);
-      playHitmarker();
-
       startAnim();
     }, { passive: false });
+
+    // Any scroll input procs the tick: mouse/trackpad wheel anywhere on the
+    // page, or a touch swipe that isn't dragging the carousel
+    window.addEventListener('wheel', (e) => {
+      spawnMlgTick(e.clientX, e.clientY);
+      playHitmarker();
+    }, { passive: true });
+
+    let lastScrollTouch = { x: 0, y: 0, t: 0 };
+    window.addEventListener('touchmove', (e) => {
+      if (isDragging) return; // carousel drag already ticks
+      const t = e.touches[0];
+      if (!t) return;
+      const now = performance.now();
+      if (now - lastScrollTouch.t < 45) return;
+      if (Math.hypot(t.clientX - lastScrollTouch.x, t.clientY - lastScrollTouch.y) < 6) return;
+      lastScrollTouch = { x: t.clientX, y: t.clientY, t: now };
+      spawnMlgTick(t.clientX, t.clientY);
+      playHitmarker();
+    }, { passive: true });
 
     document.getElementById('spinBtn').addEventListener('click', () => {
       const direction = Math.random() > 0.5 ? 1 : -1;
@@ -1320,20 +1337,30 @@
     });
 
 
-    // Unlock audio context on first interaction (required by browsers)
+    // Unlock audio on the first user gesture. Browsers only allow sound after
+    // an activate-triggering input (mousedown/pointerdown/touchstart/keydown),
+    // so we wire all of those plus click and wheel as a belt-and-suspenders
+    // fallback. Kept idempotent so repeated scroll/drag ticks are safe.
+    let audioUnlocked = false;
     function unlockAudio() {
+      if (audioUnlocked) return;
       try {
-        hitmarker.volume = 0.01;
-        hitmarker.play().then(() => {
+        const p = hitmarker.play();
+        if (p) p.then(() => {
+          audioUnlocked = true;
           hitmarker.pause();
           hitmarker.currentTime = 0;
-          hitmarker.volume = 0.5;
+          window.removeEventListener('pointerdown', unlockAudio);
+          window.removeEventListener('keydown', unlockAudio);
+          window.removeEventListener('touchstart', unlockAudio);
+          window.removeEventListener('click', unlockAudio);
+          window.removeEventListener('wheel', unlockAudio);
         }).catch(() => {});
       } catch (e) {}
-      // Prime the meme and tick clips too (silently) so sounds work on mobile
+      // Prime the meme clips (muted) so they're ready the moment a meme fires
       if (!memeAudioPrimed) {
         memeAudioPrimed = true;
-        [...memeAudios, tickAudio].forEach(a => {
+        memeAudios.forEach(a => {
           const vol = a.volume;
           a.muted = true;
           a.play().then(() => {
@@ -1344,12 +1371,11 @@
           }).catch(() => { a.muted = false; a.volume = vol; });
         });
       }
-      window.removeEventListener('click', unlockAudio);
-      window.removeEventListener('touchstart', unlockAudio);
-      window.removeEventListener('wheel', unlockAudio);
     }
-    window.addEventListener('click', unlockAudio);
+    window.addEventListener('pointerdown', unlockAudio);
+    window.addEventListener('keydown', unlockAudio);
     window.addEventListener('touchstart', unlockAudio);
+    window.addEventListener('click', unlockAudio);
     window.addEventListener('wheel', unlockAudio, { passive: true });
 
     rebuildTrack();
