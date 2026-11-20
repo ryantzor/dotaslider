@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Dota 2 Hero Roulette</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      overflow: hidden;
+      touch-action: none;
+      padding: 20px 10px;
+      transition: background 0.4s ease, color 0.3s ease;
+    }
+
+    /* ========== DEFAULT THEME ========== */
+    body.theme-default {
+      background: radial-gradient(ellipse at center, #1a1a2e 0%, #0d0d1a 70%, #000 100%);
+      color: #e8e6e3;
+    }
+    body.theme-default h1 {
+      background: linear-gradient(90deg, #c9aa71, #f0e6d2, #c9aa71);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    body.theme-default .filter-btn.active {
+      background: linear-gradient(135deg, #c9aa71, #a88b4a);
+      color: #0d0d1a;
+      border-color: #c9aa71;
+    }
+    body.theme-default .hero-card.center {
+      box-shadow: 0 0 0 3px #c9aa71, 0 15px 40px rgba(201, 170, 113, 0.35);
+      border-color: #c9aa71;
+    }
+    body.theme-default .selected-name { color: #c9aa71; }
+    body.theme-default .spin-btn {
+      background: linear-gradient(135deg, #c9aa71, #e8d5a3);
+      color: #0d0d1a;
+      box-shadow: 0 4px 15px rgba(201, 170, 113, 0.4);
+    }
+
+    /* ========== WHEEL OF FORTUNE THEME ========== */
+    body.theme-wheel {
+      background: radial-gradient(ellipse at center, #1a0a2e 0%, #0d0520 50%, #2a0a10 100%);
+      color: #ffe066;
+    }
+    body.theme-wheel h1 {
+      background: linear-gradient(90deg, #ffd700, #ff2d55, #ffd700, #00e5ff);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: rainbow 3s linear infinite;
+      text-shadow: none;
+      font-family: Impact, Haettenschweiler, 'Arial Black', sans-serif;
+      letter-spacing: 4px;
+    }
+    @keyframes rainbow {
+      to { background-position: 200% center; }
+    }
+    body.theme-wheel .subtitle { color: #ff9f43; }
+    body.theme-wheel .filter-btn {
+      background: rgba(255, 215, 0, 0.1);
+      border-color: #ffd700;
+      color: #ffe066;
+    }
+    body.theme-wheel .filter-btn.active {
+      background: linear-gradient(135deg, #ffd700, #ff9f43);
+      color: #1a0a2e;
+      border-color: #ffd700;
+      box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+    }
+    body.theme-wheel .hero-card {
+      border-color: #ffd700;
+      box-shadow: 0 0 20px rgba(255, 45, 85, 0.3);
+    }
+    body.theme-wheel .hero-card.center {
+      box-shadow: 0 0 0 4px #ffd700, 0 0 30px #ff2d55, 0 15px 40px rgba(255, 215, 0, 0.4);
+      border-color: #ffd700;
+      transform: scale(1.14);
+    }
+    body.theme-wheel .selected-name {
+      color: #ffd700;
+      text-shadow: 0 0 20px #ff2d55, 0 0 40px #ffd700;
+      font-family: Impact, Haettenschweiler, 'Arial Black', sans-serif;
+    }
+    body.theme-wheel .spin-btn {
+      background: linear-gradient(135deg, #ffd700, #ff2d55);
+      color: #1a0a2e;
+      box-shadow: 0 4px 20px rgba(255, 45, 85, 0.5);
+      font-family: Impact, Haettenschweiler, 'Arial Black', sans-serif;
+      letter-spacing: 2px;
+    }
+    body.theme-wheel .hint, body.theme-wheel .count, body.theme-wheel .selected-label {
+      color: #ff9f43;
+    }
+
+    /* ========== MLG THEME ========== */
+    body.theme-mlg {
+      background: #000;
+      color: #39ff14;
+      font-family: 'Courier New', monospace;
+    }
+    body.theme-mlg h1 {
+      background: none;
+      -webkit-text-fill-color: #39ff14;
+      color: #39ff14;
+      text-shadow: 0 0 10px #39ff14, 0 0 20px #39ff14, 2px 2px 0 #ff00ff;
+      font-family: Impact, Haettenschweiler, 'Arial Black', sans-serif;
+      letter-spacing: 3px;
+      animation: mlgGlow 0.8s ease-in-out infinite alternate;
+    }
+    @keyframes mlgGlow {
+      from { text-shadow: 0 0 10px #39ff14, 0 0 20px #39ff14, 2px 2px 0 #ff00ff; }
+      to { text-shadow: 0 0 20px #39ff14, 0 0 40px #39ff14, 0 0 60px #ff00ff, 3px 3px 0 #ff00ff; }
+    }
+    body.theme-mlg .subtitle {
+      color: #ff00ff;
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+    body.theme-mlg .filter-btn {
+      background: #111;
+      border: 2px solid #39ff14;
+      color: #39ff14;
+      border-radius: 0;
+      text-transform: uppercase;
+    }
+    body.theme-mlg .filter-btn.active {
+      background: #39ff14;
+      color: #000;
+      box-shadow: 0 0 15px #39ff14;
+    }
+    body.theme-mlg .hero-card {
+      border: 2px solid #39ff14;
+      border-radius: 0;
+      box-shadow: 0 0 15px rgba(57, 255, 20, 0.3);
+      filter: contrast(1.2) saturate(1.3);
+    }
+    body.theme-mlg .hero-card.center {
+      box-shadow: 0 0 0 3px #39ff14, 0 0 25px #39ff14, 0 0 40px #ff00ff;
+      border-color: #39ff14;
+      transform: scale(1.15);
+      filter: contrast(1.4) saturate(1.5) brightness(1.1);
+    }
+    body.theme-mlg .hero-card .name {
+      background: linear-gradient(transparent, rgba(0,0,0,0.95));
+      color: #39ff14;
+      font-family: Impact, Haettenschweiler, 'Arial Black', sans-serif;
+      text-transform: uppercase;
+    }
+    body.theme-mlg .selected-name {
+      color: #39ff14;
+      text-shadow: 0 0 15px #39ff14, 2px 2px 0 #ff00ff;
+      font-family: Impact, Haettenschweiler, 'Arial Black', sans-serif;
+      text-transform: uppercase;
+    }
+    body.theme-mlg .spin-btn {
+      background: #39ff14;
+      color: #000;
+      border-radius: 0;
+      box-shadow: 0 0 20px #39ff14;
+      font-family: Impact, Haettenschweiler, 'Arial Black', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    body.theme-mlg .spin-btn:hover {
+      background: #ff00ff;
+      box-shadow: 0 0 25px #ff00ff;
+    }
+    body.theme-mlg .hint, body.theme-mlg .count, body.theme-mlg .selected-label {
+      color: #39ff14;
+      opacity: 0.7;
+    }
+    body.theme-mlg .carousel-wrapper::before,
+    body.theme-mlg .carousel-wrapper::after {
+      background: linear-gradient(to right, #000 10%, transparent);
+    }
+    body.theme-mlg .carousel-wrapper::after {
+      background: linear-gradient(to left, #000 10%, transparent);
+    }
+
+    /* Shared base styles */
+    h1 {
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      margin-bottom: 14px;
+      letter-spacing: 1px;
+      opacity: 0.8;
+    }
+
+    .filters {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      width: 100%;
+      max-width: 720px;
+    }
+
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .filter-btn {
+      padding: 7px 14px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid #3a3a4a;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      color: inherit;
+    }
+
+    .filter-btn:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .attr-str.active { background: linear-gradient(135deg, #c23c2a, #8b2a1a) !important; border-color: #c23c2a !important; color: #fff !important; }
+    .attr-agi.active { background: linear-gradient(135deg, #2a8c3a, #1a5c2a) !important; border-color: #2a8c3a !important; color: #fff !important; }
+    .attr-int.active { background: linear-gradient(135deg, #2a6ac2, #1a3a8b) !important; border-color: #2a6ac2 !important; color: #fff !important; }
+    .attr-all.active { background: linear-gradient(135deg, #9b59b6, #6c3483) !important; border-color: #9b59b6 !important; color: #fff !important; }
+
+    .carousel-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 900px;
+      height: 300px;
+      perspective: 1200px;
+      overflow: hidden;
+    }
+
+    .carousel-track {
+      display: flex;
+      align-items: center;
+      height: 100%;
+      will-change: transform;
+      cursor: grab;
+    }
+
+    .carousel-track.grabbing {
+      cursor: grabbing;
+    }
+
+    .hero-card {
+      flex: 0 0 200px;
+      height: 260px;
+      margin: 0 10px;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      background: #111;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+      border: 2px solid #2a2a3a;
+    }
+
+    .hero-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      pointer-events: none;
+    }
+
+    .hero-card .name {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 12px 8px 10px;
+      background: linear-gradient(transparent, rgba(0,0,0,0.92));
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-align: center;
+      letter-spacing: 0.4px;
+      color: #f0e6d2;
+    }
+
+    .hero-card.center {
+      transform: scale(1.12);
+      z-index: 10;
+      filter: brightness(1.1);
+    }
+
+    .hero-card.center .name {
+      color: #fff;
+    }
+
+    .carousel-wrapper::before,
+    .carousel-wrapper::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 100px;
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    .carousel-wrapper::before {
+      left: 0;
+      background: linear-gradient(to right, #0d0d1a 10%, transparent);
+    }
+
+    .carousel-wrapper::after {
+      right: 0;
+      background: linear-gradient(to left, #0d0d1a 10%, transparent);
+    }
+
+    .selected-panel {
+      margin-top: 28px;
+      text-align: center;
+      min-height: 80px;
+    }
+
+    .selected-label {
+      font-size: 0.8rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      opacity: 0.7;
+    }
+
+    .selected-name {
+      font-size: 2rem;
+      font-weight: 700;
+      transition: all 0.3s ease;
+    }
+
+    .selected-name.pop {
+      transform: scale(1.12);
+    }
+
+    .hint {
+      margin-top: 18px;
+      font-size: 0.8rem;
+      letter-spacing: 0.5px;
+      opacity: 0.6;
+    }
+
+    .spin-btn {
+      margin-top: 16px;
+      padding: 11px 32px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .spin-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .spin-btn:active {
+      transform: translateY(0);
+    }
+
+    .count {
+      font-size: 0.75rem;
+      margin-top: 6px;
+      opacity: 0.6;
+    }
+  </style>
+</head>
+<body class="theme-default">
+  <h1>Dota 2 Hero Roulette</h1>
+  <p class="subtitle">Flick • Drag • Scroll wheel • Lands on a hero</p>
+
+  <div class="filters">
+    <div class="filter-row" id="themeFilters">
+      <button class="filter-btn active" data-theme="default">Default</button>
+      <button class="filter-btn" data-theme="wheel">Wheel of Fortune</button>
+      <button class="filter-btn" data-theme="mlg">MLG</button>
+    </div>
+    <div class="filter-row" id="attrFilters">
+      <button class="filter-btn active" data-attr="any">All Attr</button>
+      <button class="filter-btn attr-str" data-attr="str">Strength</button>
+      <button class="filter-btn attr-agi" data-attr="agi">Agility</button>
+      <button class="filter-btn attr-int" data-attr="int">Intelligence</button>
+      <button class="filter-btn attr-all" data-attr="all">Universal</button>
+    </div>
+  </div>
+
+  <div class="carousel-wrapper" id="wrapper">
+    <div class="carousel-track" id="track"></div>
+  </div>
+
+  <div class="selected-panel">
+    <div class="selected-label">Selected Hero</div>
+    <div class="selected-name" id="selectedName">—</div>
+    <div class="count" id="heroCount"></div>
+  </div>
+
+  <button class="spin-btn" id="spinBtn">Spin Random</button>
+  <p class="hint">Drag / swipe / scroll wheel • lands with momentum</p>
+
+  <!-- MLG Hitmarker sound -->
+  <audio id="hitmarker" preload="auto" src="https://instrumentalfx.co/wp-content/uploads/2017/12/Hitmarker_-_MLG_Sound_Effect.mp3"></audio>
+
+  <script>
+    const ALL_HEROES = [
+      {id:"abaddon", name:"Abaddon", attr:"all", hard:1},
+      {id:"alchemist", name:"Alchemist", attr:"str", hard:0},
+      {id:"ancient_apparition", name:"Ancient Apparition", attr:"int", hard:1},
+      {id:"antimage", name:"Anti-Mage", attr:"agi", hard:0},
+      {id:"arc_warden", name:"Arc Warden", attr:"all", hard:0},
+      {id:"axe", name:"Axe", attr:"str", hard:0},
+      {id:"bane", name:"Bane", attr:"all", hard:1},
+      {id:"batrider", name:"Batrider", attr:"all", hard:0},
+      {id:"beastmaster", name:"Beastmaster", attr:"all", hard:0},
+      {id:"bloodseeker", name:"Bloodseeker", attr:"agi", hard:0},
+      {id:"bounty_hunter", name:"Bounty Hunter", attr:"agi", hard:0},
+      {id:"brewmaster", name:"Brewmaster", attr:"all", hard:0},
+      {id:"bristleback", name:"Bristleback", attr:"str", hard:0},
+      {id:"broodmother", name:"Broodmother", attr:"agi", hard:0},
+      {id:"centaur", name:"Centaur Warrunner", attr:"str", hard:0},
+      {id:"chaos_knight", name:"Chaos Knight", attr:"str", hard:0},
+      {id:"chen", name:"Chen", attr:"int", hard:0},
+      {id:"clinkz", name:"Clinkz", attr:"agi", hard:0},
+      {id:"rattletrap", name:"Clockwerk", attr:"str", hard:0},
+      {id:"crystal_maiden", name:"Crystal Maiden", attr:"int", hard:1},
+      {id:"dark_seer", name:"Dark Seer", attr:"int", hard:0},
+      {id:"dark_willow", name:"Dark Willow", attr:"int", hard:0},
+      {id:"dawnbreaker", name:"Dawnbreaker", attr:"str", hard:0},
+      {id:"dazzle", name:"Dazzle", attr:"all", hard:1},
+      {id:"death_prophet", name:"Death Prophet", attr:"all", hard:0},
+      {id:"disruptor", name:"Disruptor", attr:"int", hard:1},
+      {id:"doom_bringer", name:"Doom", attr:"str", hard:0},
+      {id:"dragon_knight", name:"Dragon Knight", attr:"str", hard:0},
+      {id:"drow_ranger", name:"Drow Ranger", attr:"agi", hard:0},
+      {id:"earth_spirit", name:"Earth Spirit", attr:"str", hard:0},
+      {id:"earthshaker", name:"Earthshaker", attr:"str", hard:0},
+      {id:"elder_titan", name:"Elder Titan", attr:"str", hard:0},
+      {id:"ember_spirit", name:"Ember Spirit", attr:"agi", hard:0},
+      {id:"enchantress", name:"Enchantress", attr:"int", hard:0},
+      {id:"enigma", name:"Enigma", attr:"all", hard:0},
+      {id:"faceless_void", name:"Faceless Void", attr:"agi", hard:0},
+      {id:"grimstroke", name:"Grimstroke", attr:"int", hard:1},
+      {id:"gyrocopter", name:"Gyrocopter", attr:"agi", hard:0},
+      {id:"hoodwink", name:"Hoodwink", attr:"agi", hard:0},
+      {id:"huskar", name:"Huskar", attr:"str", hard:0},
+      {id:"invoker", name:"Invoker", attr:"int", hard:0},
+      {id:"wisp", name:"Io", attr:"all", hard:1},
+      {id:"jakiro", name:"Jakiro", attr:"int", hard:0},
+      {id:"juggernaut", name:"Juggernaut", attr:"agi", hard:0},
+      {id:"keeper_of_the_light", name:"Keeper of the Light", attr:"int", hard:0},
+      {id:"kunkka", name:"Kunkka", attr:"str", hard:0},
+      {id:"legion_commander", name:"Legion Commander", attr:"str", hard:0},
+      {id:"leshrac", name:"Leshrac", attr:"int", hard:0},
+      {id:"lich", name:"Lich", attr:"int", hard:1},
+      {id:"life_stealer", name:"Lifestealer", attr:"str", hard:0},
+      {id:"lina", name:"Lina", attr:"int", hard:0},
+      {id:"lion", name:"Lion", attr:"int", hard:1},
+      {id:"lone_druid", name:"Lone Druid", attr:"agi", hard:0},
+      {id:"luna", name:"Luna", attr:"agi", hard:0},
+      {id:"lycan", name:"Lycan", attr:"str", hard:0},
+      {id:"magnataur", name:"Magnus", attr:"str", hard:0},
+      {id:"marci", name:"Marci", attr:"all", hard:0},
+      {id:"mars", name:"Mars", attr:"str", hard:0},
+      {id:"medusa", name:"Medusa", attr:"agi", hard:0},
+      {id:"meepo", name:"Meepo", attr:"agi", hard:0},
+      {id:"mirana", name:"Mirana", attr:"agi", hard:1},
+      {id:"monkey_king", name:"Monkey King", attr:"agi", hard:0},
+      {id:"morphling", name:"Morphling", attr:"agi", hard:0},
+      {id:"naga_siren", name:"Naga Siren", attr:"agi", hard:0},
+      {id:"furion", name:"Nature's Prophet", attr:"int", hard:0},
+      {id:"necrolyte", name:"Necrophos", attr:"int", hard:0},
+      {id:"night_stalker", name:"Night Stalker", attr:"str", hard:0},
+      {id:"nyx_assassin", name:"Nyx Assassin", attr:"agi", hard:0},
+      {id:"ogre_magi", name:"Ogre Magi", attr:"str", hard:1},
+      {id:"omniknight", name:"Omniknight", attr:"str", hard:0},
+      {id:"oracle", name:"Oracle", attr:"int", hard:1},
+      {id:"obsidian_destroyer", name:"Outworld Destroyer", attr:"int", hard:0},
+      {id:"pangolier", name:"Pangolier", attr:"agi", hard:0},
+      {id:"phantom_assassin", name:"Phantom Assassin", attr:"agi", hard:0},
+      {id:"phantom_lancer", name:"Phantom Lancer", attr:"agi", hard:0},
+      {id:"phoenix", name:"Phoenix", attr:"str", hard:0},
+      {id:"primal_beast", name:"Primal Beast", attr:"str", hard:0},
+      {id:"puck", name:"Puck", attr:"int", hard:0},
+      {id:"pudge", name:"Pudge", attr:"str", hard:0},
+      {id:"pugna", name:"Pugna", attr:"int", hard:1},
+      {id:"queenofpain", name:"Queen of Pain", attr:"int", hard:0},
+      {id:"razor", name:"Razor", attr:"agi", hard:0},
+      {id:"riki", name:"Riki", attr:"agi", hard:0},
+      {id:"ringmaster", name:"Ring Master", attr:"int", hard:0},
+      {id:"rubick", name:"Rubick", attr:"int", hard:0},
+      {id:"sand_king", name:"Sand King", attr:"all", hard:0},
+      {id:"shadow_demon", name:"Shadow Demon", attr:"int", hard:0},
+      {id:"nevermore", name:"Shadow Fiend", attr:"agi", hard:0},
+      {id:"shadow_shaman", name:"Shadow Shaman", attr:"int", hard:1},
+      {id:"silencer", name:"Silencer", attr:"int", hard:1},
+      {id:"skywrath_mage", name:"Skywrath Mage", attr:"int", hard:0},
+      {id:"slardar", name:"Slardar", attr:"str", hard:0},
+      {id:"slark", name:"Slark", attr:"agi", hard:0},
+      {id:"snapfire", name:"Snapfire", attr:"all", hard:0},
+      {id:"sniper", name:"Sniper", attr:"agi", hard:0},
+      {id:"spectre", name:"Spectre", attr:"agi", hard:0},
+      {id:"spirit_breaker", name:"Spirit Breaker", attr:"str", hard:0},
+      {id:"storm_spirit", name:"Storm Spirit", attr:"int", hard:0},
+      {id:"sven", name:"Sven", attr:"str", hard:0},
+      {id:"techies", name:"Techies", attr:"all", hard:1},
+      {id:"templar_assassin", name:"Templar Assassin", attr:"agi", hard:0},
+      {id:"terrorblade", name:"Terrorblade", attr:"agi", hard:0},
+      {id:"tidehunter", name:"Tidehunter", attr:"str", hard:0},
+      {id:"shredder", name:"Timbersaw", attr:"str", hard:0},
+      {id:"tinker", name:"Tinker", attr:"int", hard:0},
+      {id:"tiny", name:"Tiny", attr:"str", hard:0},
+      {id:"treant", name:"Treant Protector", attr:"str", hard:0},
+      {id:"troll_warlord", name:"Troll Warlord", attr:"agi", hard:0},
+      {id:"tusk", name:"Tusk", attr:"str", hard:0},
+      {id:"abyssal_underlord", name:"Underlord", attr:"str", hard:0},
+      {id:"undying", name:"Undying", attr:"str", hard:1},
+      {id:"ursa", name:"Ursa", attr:"agi", hard:0},
+      {id:"vengefulspirit", name:"Vengeful Spirit", attr:"agi", hard:1},
+      {id:"venomancer", name:"Venomancer", attr:"all", hard:0},
+      {id:"viper", name:"Viper", attr:"agi", hard:0},
+      {id:"visage", name:"Visage", attr:"all", hard:0},
+      {id:"void_spirit", name:"Void Spirit", attr:"all", hard:0},
+      {id:"warlock", name:"Warlock", attr:"int", hard:1},
+      {id:"weaver", name:"Weaver", attr:"agi", hard:0},
+      {id:"windrunner", name:"Windranger", attr:"all", hard:0},
+      {id:"winter_wyvern", name:"Winter Wyvern", attr:"int", hard:1},
+      {id:"witch_doctor", name:"Witch Doctor", attr:"int", hard:1},
+      {id:"skeleton_king", name:"Wraith King", attr:"str", hard:0},
+      {id:"zuus", name:"Zeus", attr:"int", hard:0}
+    ];
+
+    const IMG_BASE = 'https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/heroes/';
+    const CARD_WIDTH = 220;
+
+    let currentMode = 'all';
+    let currentAttr = 'any';
+    let currentTheme = 'default';
+    let activeHeroes = [];
+    let trackItems = [];
+
+    const track = document.getElementById('track');
+    const selectedNameEl = document.getElementById('selectedName');
+    const heroCountEl = document.getElementById('heroCount');
+    const wrapper = document.getElementById('wrapper');
+    const hitmarker = document.getElementById('hitmarker');
+
+    let currentX = 0;
+    let velocity = 0;
+    let pendingScroll = 0;
+    let isDragging = false;
+    let lastX = 0;
+    let lastTime = 0;
+    let animId = null;
+    let centerIndex = -1;
+    let lastHitTime = 0;
+    let recentWheelTimes = [];  // timestamps of recent wheel events for intensity
+
+    function getFilteredHeroes() {
+      return ALL_HEROES.filter(h => {
+        if (currentAttr !== 'any' && h.attr !== currentAttr) return false;
+        return true;
+      });
+    }
+
+    function rebuildTrack() {
+      activeHeroes = getFilteredHeroes();
+      heroCountEl.textContent = activeHeroes.length + ' heroes available';
+
+      // Many repeats so the infinite wrap always has room
+      const REPEATS = Math.max(12, Math.ceil(40 / Math.max(1, activeHeroes.length)));
+      trackItems = [];
+      for (let r = 0; r < REPEATS; r++) {
+        trackItems = trackItems.concat(activeHeroes);
+      }
+      window._heroRepeats = REPEATS;
+
+      track.innerHTML = '';
+      trackItems.forEach((hero, idx) => {
+        const card = document.createElement('div');
+        card.className = 'hero-card';
+        card.dataset.index = idx;
+        card.dataset.name = hero.name;
+        card.innerHTML = `
+          <img src="${IMG_BASE}${hero.id}.png" alt="${hero.name}" loading="lazy"
+               onerror="this.src='https://cdn.dota2.com/apps/dota2/images/heroes/${hero.id}_lg.png'">
+          <div class="name">${hero.name}</div>
+        `;
+        track.appendChild(card);
+      });
+
+      const totalCards = trackItems.length;
+      if (totalCards === 0) {
+        selectedNameEl.textContent = 'No heroes';
+        return;
+      }
+      const middleStart = Math.floor(REPEATS / 2) * activeHeroes.length;
+      currentX = -middleStart * CARD_WIDTH + (wrapper.clientWidth / 2 - CARD_WIDTH / 2);
+      velocity = 0;
+      pendingScroll = 0;
+      recentWheelTimes = [];
+      updateTransform();
+    }
+
+    function wrapInfinite() {
+      // Keep the track in the middle of the duplicated list so it never runs out of heroes
+      if (activeHeroes.length === 0 || trackItems.length === 0) return;
+      const setWidth = activeHeroes.length * CARD_WIDTH;
+      const centerOffset = wrapper.clientWidth / 2 - CARD_WIDTH / 2;
+      const totalWidth = trackItems.length * CARD_WIDTH;
+
+      // If we drift too far toward either end, jump by one full set of heroes
+      // This keeps the visual continuous while staying inside the long track
+      const minX = -(totalWidth - setWidth * 2) + centerOffset;
+      const maxX = -setWidth + centerOffset;
+
+      while (currentX > maxX) {
+        currentX -= setWidth;
+      }
+      while (currentX < minX) {
+        currentX += setWidth;
+      }
+    }
+
+    function updateTransform() {
+      wrapInfinite();
+      track.style.transform = `translateX(${currentX}px)`;
+      updateCenterCard();
+    }
+
+    function updateCenterCard() {
+      if (trackItems.length === 0) return;
+      const centerPos = -currentX + wrapper.clientWidth / 2;
+      let idx = Math.round((centerPos - CARD_WIDTH / 2) / CARD_WIDTH);
+      // Keep index valid after wrapping
+      idx = ((idx % trackItems.length) + trackItems.length) % trackItems.length;
+
+      document.querySelectorAll('.hero-card').forEach(c => c.classList.remove('center'));
+      const cards = track.children;
+      if (cards[idx]) {
+        cards[idx].classList.add('center');
+        const name = cards[idx].dataset.name;
+
+        if (selectedNameEl.textContent !== name) {
+          selectedNameEl.textContent = name;
+          selectedNameEl.classList.remove('pop');
+          void selectedNameEl.offsetWidth;
+          selectedNameEl.classList.add('pop');
+        }
+        centerIndex = idx;
+      }
+    }
+
+    function animate() {
+      if (!isDragging) {
+        // Drain queued wheel momentum into velocity (weighted feel)
+        if (Math.abs(pendingScroll) > 0.1) {
+          const drain = pendingScroll * 0.12;
+          velocity += drain;
+          pendingScroll -= drain;
+        } else {
+          pendingScroll = 0;
+        }
+
+        // Friction – lower while there is still pending scroll so it keeps rolling
+        const friction = Math.abs(pendingScroll) > 1 ? 0.985 : 0.94;
+        velocity *= friction;
+
+        // Soft snap only when everything has settled
+        if (Math.abs(velocity) < 0.6 && Math.abs(pendingScroll) < 0.5) {
+          const centerPos = -currentX + wrapper.clientWidth / 2;
+          const targetIdx = Math.round((centerPos - CARD_WIDTH / 2) / CARD_WIDTH);
+          const targetX = -(targetIdx * CARD_WIDTH) + (wrapper.clientWidth / 2 - CARD_WIDTH / 2);
+          const diff = targetX - currentX;
+          velocity += diff * 0.07;
+          if (Math.abs(diff) < 0.4 && Math.abs(velocity) < 0.25) {
+            currentX = targetX;
+            velocity = 0;
+            pendingScroll = 0;
+            updateTransform();
+            return;
+          }
+        }
+
+        currentX += velocity;
+        updateTransform();
+      }
+
+      if (Math.abs(velocity) > 0.04 || Math.abs(pendingScroll) > 0.1 || isDragging) {
+        animId = requestAnimationFrame(animate);
+      }
+    }
+
+    function startAnim() {
+      if (animId) cancelAnimationFrame(animId);
+      animId = requestAnimationFrame(animate);
+    }
+
+    function playHitmarker() {
+      if (currentTheme !== 'mlg') return;
+      const now = performance.now();
+      if (now - lastHitTime < 40) return;
+      lastHitTime = now;
+      try {
+        // Clone so overlapping hits can play without cutting each other off
+        const s = hitmarker.cloneNode();
+        s.volume = 0.5;
+        s.play().catch(() => {});
+      } catch (e) {}
+    }
+
+    function onPointerDown(e) {
+      isDragging = true;
+      track.classList.add('grabbing');
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      lastX = clientX;
+      lastTime = performance.now();
+      velocity = 0;
+      pendingScroll = 0;
+      recentWheelTimes = [];
+      if (animId) cancelAnimationFrame(animId);
+    }
+
+    function onPointerMove(e) {
+      if (!isDragging) return;
+      e.preventDefault();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const dx = clientX - lastX;
+      currentX += dx;
+
+      const now = performance.now();
+      const dt = now - lastTime;
+      if (dt > 0) velocity = dx / (dt / 16);
+      lastX = clientX;
+      lastTime = now;
+      updateTransform();
+
+      // MLG hitmarker while finger/mouse dragging (every meaningful move)
+      if (Math.abs(dx) > 2) {
+        playHitmarker();
+      }
+    }
+
+    function onPointerUp() {
+      if (!isDragging) return;
+      isDragging = false;
+      track.classList.remove('grabbing');
+      velocity *= 1.4;
+      startAnim();
+    }
+
+    track.addEventListener('mousedown', onPointerDown);
+    window.addEventListener('mousemove', onPointerMove);
+    window.addEventListener('mouseup', onPointerUp);
+    window.addEventListener('mouseleave', onPointerUp);
+
+    track.addEventListener('touchstart', onPointerDown, { passive: false });
+    track.addEventListener('touchmove', onPointerMove, { passive: false });
+    track.addEventListener('touchend', onPointerUp);
+
+    wrapper.addEventListener('wheel', (e) => {
+      e.preventDefault();
+
+      const now = performance.now();
+      const delta = -e.deltaY;
+
+      // Track recent wheel events (last 220ms) to measure how hard user is flicking
+      recentWheelTimes.push(now);
+      recentWheelTimes = recentWheelTimes.filter(t => now - t < 220);
+      const events = recentWheelTimes.length;
+
+      // Gradual stepped boost (~10% / 20% / 35% / 60% intensity tiers)
+      //   1 event  → 1.00  (base)
+      //   2–3      → 1.10  (~10%)
+      //   4–5      → 1.20  (~20%)
+      //   6–8      → 1.35  (~35%)
+      //   9+       → 1.60  (~60%)
+      let boost = 1.0;
+      if (events >= 9)      boost = 1.60;
+      else if (events >= 6) boost = 1.35;
+      else if (events >= 4) boost = 1.20;
+      else if (events >= 2) boost = 1.10;
+
+      pendingScroll += delta * 1.35 * boost;
+      pendingScroll = Math.max(-900, Math.min(900, pendingScroll));
+
+      // Immediate velocity also gets the same gradual boost
+      velocity += delta * 0.10 * boost;
+
+      // MLG hitmarker on every scroll event
+      playHitmarker();
+
+      startAnim();
+    }, { passive: false });
+
+    document.getElementById('spinBtn').addEventListener('click', () => {
+      const direction = Math.random() > 0.5 ? 1 : -1;
+      velocity = direction * (35 + Math.random() * 50);
+      pendingScroll += direction * (80 + Math.random() * 120);
+      if (currentTheme === 'mlg') playHitmarker();
+      startAnim();
+    });
+
+    // Theme toggle
+    document.querySelectorAll('#themeFilters .filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#themeFilters .filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentTheme = btn.dataset.theme;
+        document.body.className = 'theme-' + currentTheme;
+      });
+    });
+
+    // Attribute filters
+    document.querySelectorAll('#attrFilters .filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#attrFilters .filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentAttr = btn.dataset.attr;
+        rebuildTrack();
+      });
+    });
+
+    window.addEventListener('resize', () => {
+      currentX = -centerIndex * CARD_WIDTH + (wrapper.clientWidth / 2 - CARD_WIDTH / 2);
+      updateTransform();
+    });
+
+
+    // Unlock audio context on first interaction (required by browsers)
+    function unlockAudio() {
+      try {
+        hitmarker.volume = 0.01;
+        hitmarker.play().then(() => {
+          hitmarker.pause();
+          hitmarker.currentTime = 0;
+          hitmarker.volume = 0.5;
+        }).catch(() => {});
+      } catch (e) {}
+      window.removeEventListener('click', unlockAudio);
+      window.removeEventListener('touchstart', unlockAudio);
+      window.removeEventListener('wheel', unlockAudio);
+    }
+    window.addEventListener('click', unlockAudio);
+    window.addEventListener('touchstart', unlockAudio);
+    window.addEventListener('wheel', unlockAudio, { passive: true });
+
+    rebuildTrack();
+  </script>
+</body>
+</html>
